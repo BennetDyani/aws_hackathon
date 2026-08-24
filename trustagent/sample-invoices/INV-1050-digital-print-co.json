@@ -1,0 +1,53 @@
+{
+  "invoice_id": "INV-1050",
+  "supplier": {
+    "name": "Digital Print Co",
+    "registration": "2018/998877/07",
+    "contact": "invoices@digitalprint.co.za",
+    "address": "7 Graphix Street, Centurion, 0157"
+  },
+  "bill_to": {
+    "company": "TrustCorp Holdings Ltd",
+    "department": "Marketing",
+    "contact": "marketing@trustcorp.co.za"
+  },
+  "invoice_date": "2026-08-15",
+  "due_date": "2026-08-19",
+  "payment_terms": "Immediate",
+  "urgency": "HIGH",
+  "currency": "ZAR",
+  "bank_details": {
+    "bank_name": "FNB",
+    "account_holder": "Digital Print Co (Pty) Ltd",
+    "account_number": "****6655",
+    "branch_code": "250655",
+    "reference": "INV-1050-DP"
+  },
+  "line_items": [
+    {
+      "item": 1,
+      "description": "Annual report printing - 500 copies (premium)",
+      "quantity": 500,
+      "unit_price": 185.00,
+      "total": 92500.00
+    },
+    {
+      "item": 2,
+      "description": "Marketing brochures - A4 tri-fold (5000 copies)",
+      "quantity": 5000,
+      "unit_price": 12.50,
+      "total": 62500.00
+    },
+    {
+      "item": 3,
+      "description": "Rush delivery surcharge",
+      "quantity": 1,
+      "unit_price": 15000.00,
+      "total": 15000.00
+    }
+  ],
+  "subtotal": 170000.00,
+  "vat": 25500.00,
+  "total": 195500.00,
+  "notes": "New bank account - please update records. Previous account closed. Payment needed urgently for materials procurement."
+}

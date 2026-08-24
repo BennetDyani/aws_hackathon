@@ -1,0 +1,60 @@
+{
+  "invoice_id": "INV-1052",
+  "supplier": {
+    "name": "QuickShip Logistics",
+    "registration": "2022/112233/07",
+    "contact": "accounts@quickship-sa.co.za",
+    "address": "Plot 14, Logistics Hub, OR Tambo, 1627"
+  },
+  "bill_to": {
+    "company": "TrustCorp Holdings Ltd",
+    "department": "Operations",
+    "contact": "ops-finance@trustcorp.co.za"
+  },
+  "invoice_date": "2026-08-19",
+  "due_date": "2026-08-20",
+  "payment_terms": "COD",
+  "urgency": "IMMEDIATE",
+  "currency": "ZAR",
+  "bank_details": {
+    "bank_name": "TymeBank",
+    "account_holder": "Q-Ship Trading",
+    "account_number": "****8801",
+    "branch_code": "678910",
+    "reference": "QS-URGENT-1052"
+  },
+  "line_items": [
+    {
+      "item": 1,
+      "description": "Emergency courier service - JHB to CPT (x3 pallets)",
+      "quantity": 3,
+      "unit_price": 28000.00,
+      "total": 84000.00
+    },
+    {
+      "item": 2,
+      "description": "After-hours collection surcharge",
+      "quantity": 1,
+      "unit_price": 8500.00,
+      "total": 8500.00
+    },
+    {
+      "item": 3,
+      "description": "Insurance - high-value goods",
+      "quantity": 1,
+      "unit_price": 12000.00,
+      "total": 12000.00
+    },
+    {
+      "item": 4,
+      "description": "Handling fee",
+      "quantity": 1,
+      "unit_price": 5500.00,
+      "total": 5500.00
+    }
+  ],
+  "subtotal": 110000.00,
+  "vat": 16500.00,
+  "total": 126500.00,
+  "notes": "URGENT: Payment required before dispatch. Account holder name differs from supplier name due to recent restructuring. Please process ASAP."
+}

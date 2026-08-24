@@ -1,0 +1,46 @@
+{
+  "invoice_id": "INV-1049",
+  "supplier": {
+    "name": "Metro Cleaning Services",
+    "registration": "2020/654321/07",
+    "contact": "billing@metrocleaning.co.za",
+    "address": "18 Industrial Lane, Midrand, 1685"
+  },
+  "bill_to": {
+    "company": "TrustCorp Holdings Ltd",
+    "department": "Facilities Management",
+    "contact": "facilities@trustcorp.co.za"
+  },
+  "invoice_date": "2026-08-01",
+  "due_date": "2026-08-30",
+  "payment_terms": "30 days",
+  "urgency": "NORMAL",
+  "currency": "ZAR",
+  "bank_details": {
+    "bank_name": "Standard Bank",
+    "account_holder": "Metro Cleaning Services CC",
+    "account_number": "****7733",
+    "branch_code": "051001",
+    "reference": "INV-1049"
+  },
+  "line_items": [
+    {
+      "item": 1,
+      "description": "Monthly cleaning service - August 2026",
+      "quantity": 1,
+      "unit_price": 12500.00,
+      "total": 12500.00
+    },
+    {
+      "item": 2,
+      "description": "Deep clean - boardroom and executive offices",
+      "quantity": 1,
+      "unit_price": 3500.00,
+      "total": 3500.00
+    }
+  ],
+  "subtotal": 16000.00,
+  "vat": 2400.00,
+  "total": 18400.00,
+  "notes": "Monthly service as per contract MC-2025-004."
+}

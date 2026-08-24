@@ -1,0 +1,53 @@
+{
+  "invoice_id": "INV-1048",
+  "supplier": {
+    "name": "ABC Office Solutions",
+    "registration": "2019/123456/07",
+    "contact": "accounts@abcoffice.co.za",
+    "address": "42 Main Road, Sandton, Johannesburg, 2196"
+  },
+  "bill_to": {
+    "company": "TrustCorp Holdings Ltd",
+    "department": "Procurement",
+    "contact": "procurement@trustcorp.co.za"
+  },
+  "invoice_date": "2026-08-19",
+  "due_date": "2026-08-22",
+  "payment_terms": "Immediate",
+  "urgency": "IMMEDIATE",
+  "currency": "ZAR",
+  "bank_details": {
+    "bank_name": "Capitec Bank",
+    "account_holder": "ABC Office Solutions (Pty) Ltd",
+    "account_number": "****9917",
+    "branch_code": "470010",
+    "reference": "INV-1048"
+  },
+  "line_items": [
+    {
+      "item": 1,
+      "description": "Ergonomic office chairs - Model EX500",
+      "quantity": 25,
+      "unit_price": 4500.00,
+      "total": 112500.00
+    },
+    {
+      "item": 2,
+      "description": "Standing desk converters - FlexiDesk Pro",
+      "quantity": 15,
+      "unit_price": 3500.00,
+      "total": 52500.00
+    },
+    {
+      "item": 3,
+      "description": "Delivery and installation",
+      "quantity": 1,
+      "unit_price": 20000.00,
+      "total": 20000.00
+    }
+  ],
+  "subtotal": 185000.00,
+  "vat": 0.00,
+  "total": 185000.00,
+  "notes": "Urgent delivery required. Payment must be processed immediately to secure stock allocation."
+}

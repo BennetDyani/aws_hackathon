@@ -1,0 +1,53 @@
+{
+  "invoice_id": "INV-1051",
+  "supplier": {
+    "name": "Secure IT Solutions",
+    "registration": "2021/445566/07",
+    "contact": "finance@secureit.co.za",
+    "address": "99 Cyber Park, Bryanston, 2021"
+  },
+  "bill_to": {
+    "company": "TrustCorp Holdings Ltd",
+    "department": "Information Technology",
+    "contact": "it-procurement@trustcorp.co.za"
+  },
+  "invoice_date": "2026-08-18",
+  "due_date": "2026-09-17",
+  "payment_terms": "30 days",
+  "urgency": "NORMAL",
+  "currency": "ZAR",
+  "bank_details": {
+    "bank_name": "Nedbank",
+    "account_holder": "Secure IT Solutions (Pty) Ltd",
+    "account_number": "****3344",
+    "branch_code": "198765",
+    "reference": "SIT-INV-1051"
+  },
+  "line_items": [
+    {
+      "item": 1,
+      "description": "Annual cybersecurity license renewal - Enterprise",
+      "quantity": 1,
+      "unit_price": 45000.00,
+      "total": 45000.00
+    },
+    {
+      "item": 2,
+      "description": "Endpoint protection - 200 seats",
+      "quantity": 200,
+      "unit_price": 150.00,
+      "total": 30000.00
+    },
+    {
+      "item": 3,
+      "description": "Security awareness training platform - annual",
+      "quantity": 1,
+      "unit_price": 18000.00,
+      "total": 18000.00
+    }
+  ],
+  "subtotal": 93000.00,
+  "vat": 13950.00,
+  "total": 106950.00,
+  "notes": "Annual renewal as per contract SIT-2025-012. Please process within standard payment terms."
+}
