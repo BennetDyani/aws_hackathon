@@ -23,12 +23,13 @@ export AWS_ACCESS_KEY_ID="<from workshop page>"
 export AWS_SECRET_ACCESS_KEY="<from workshop page>"
 export AWS_SESSION_TOKEN="<from workshop page>"
 export AWS_DEFAULT_REGION="us-east-1"
+```
 
+```powershell
 $Env:AWS_DEFAULT_REGION="us-east-1"
-$Env:AWS_ACCESS_KEY_ID="ASIATZCVA4REMDRYIX4R"
-$Env:AWS_SECRET_ACCESS_KEY="vId000D8Q1nCSvaECHLYwm1ZM5BG9n6nwKg87vsN"
-$Env:AWS_SESSION_TOKEN="IQoJb3JpZ2luX2VjEKz//////////wEaCXVzLWVhc3QtMSJHMEUCIQCHxt2EBsWdBTVG870ixNUONCc+3RYL1Sy/wCG6/gsAtwIgTz9b5PvE9DYRdaqcsF2HY1ZoQfFyp1RCZhf2N2C5/aIqmQIIdBABGgwyNjAwMjM4Mzc3NjgiDPgIPJQIhLPfP4Idair2AYRmk9WKSvjZoCfoNibvEK4mcv4Ej78NkNH21SdhdklBEZezFc7oXlodEuFW28PKhHNb2AYoZFRkiYvNLf2tIBZrTe7K/NoLQh59nAjmNLuNdLnk2wELsh6HAo9td1U8UAYpKZT+07CIPUQuq78o62sWoL1YH93uwoL5ICmL0TMbu+LI0RAHUSmDWzuvZ9biMczbvFZ+oi2QjbV9Eo6te8Oa245huBNYSDFjtvvK9KEoPfaDHpaRcuGjCorh3oM7SkRPPTAb3muyqR9850Z9VRD2Eo6J3/RDD8ubxTjRcTxIH/Wil/6V1EO9/GBqzbLrorU6mDKMLjDFm5bUBjqdAaXRjugse1/0M1TmaQ1yECYvKZ3JL5modEDv4iERjdq2nRPiUyXQE+fF2f27E8QcA85EuRzwq8LTyE0oa8Xb6My94C8QQLVdvUNtx3mQfBMcdx7D8xOL9v1aIY7nhaKixgW3rFnBgPvCV9VcpOZISMg1WB7NQxdu1F2fN1C94us2uuHszknI+uvGFxon81mhDyMNEyeaag2ls21hCmQ="
-$Env:AWS_DEFAULT_REGION="us-east-1"
+$Env:AWS_ACCESS_KEY_ID="<from workshop page>"
+$Env:AWS_SECRET_ACCESS_KEY="<from workshop page>"
+$Env:AWS_SESSION_TOKEN="<from workshop page>"
 ```
 
 These credentials expire periodically — if you get authentication errors, grab fresh credentials from the Workshop Studio event page.
