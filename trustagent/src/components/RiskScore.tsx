@@ -11,14 +11,14 @@ interface RiskScoreProps {
 const levelColors: Record<string, string> = {
   LOW: 'text-green-600 bg-green-50 border-green-200',
   MEDIUM: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-  HIGH: 'text-orange-600 bg-orange-50 border-orange-200',
+  HIGH: 'text-red-600 bg-red-50 border-red-200',
   CRITICAL: 'text-red-600 bg-red-50 border-red-200',
 };
 
 const levelBgRing: Record<string, string> = {
   LOW: 'stroke-green-500',
   MEDIUM: 'stroke-yellow-500',
-  HIGH: 'stroke-orange-500',
+  HIGH: 'stroke-red-500',
   CRITICAL: 'stroke-red-500',
 };
 

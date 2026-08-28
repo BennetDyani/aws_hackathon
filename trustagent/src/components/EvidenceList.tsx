@@ -9,7 +9,7 @@ interface EvidenceListProps {
 const severityStyles: Record<string, string> = {
   LOW: 'bg-green-100 text-green-800',
   MEDIUM: 'bg-yellow-100 text-yellow-800',
-  HIGH: 'bg-orange-100 text-orange-800',
+  HIGH: 'bg-red-100 text-red-800',
   CRITICAL: 'bg-red-100 text-red-800',
 };
 
@@ -51,7 +51,7 @@ export default function EvidenceList({ evidence }: EvidenceListProps) {
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-sm font-bold text-red-600">
+                <span className={`text-sm font-bold ${item.risk_contribution > 0 ? 'text-red-600' : 'text-gray-400'}`}>
                   +{item.risk_contribution}
                 </span>
                 <p className="text-xs text-gray-400">risk points</p>

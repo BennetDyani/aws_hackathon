@@ -46,6 +46,44 @@ export default function ActionPanel({
     return null;
   }
 
+  // APPROVE_PAYMENT is a good outcome (green); REQUEST_VERIFICATION needs a
+  // closer look but isn't itself alarming (yellow); HOLD_PAYMENT/ESCALATE
+  // are the genuine danger cases (red).
+  const variant =
+    recommendedAction === 'APPROVE_PAYMENT' ? 'success' :
+    recommendedAction === 'REQUEST_VERIFICATION' ? 'warning' :
+    'danger';
+
+  const styles = {
+    success: {
+      card: 'border-green-200 bg-green-50',
+      heading: 'text-green-900',
+      body: 'text-green-800',
+      button: 'btn-success',
+      confirmBox: 'bg-white border-green-200',
+      confirmTitle: 'text-green-900',
+      confirmBody: 'text-green-700',
+    },
+    warning: {
+      card: 'border-yellow-200 bg-yellow-50',
+      heading: 'text-yellow-900',
+      body: 'text-yellow-800',
+      button: 'btn-warning',
+      confirmBox: 'bg-white border-yellow-200',
+      confirmTitle: 'text-yellow-900',
+      confirmBody: 'text-yellow-700',
+    },
+    danger: {
+      card: 'border-red-200 bg-red-50',
+      heading: 'text-red-900',
+      body: 'text-red-800',
+      button: 'btn-danger',
+      confirmBox: 'bg-white border-red-200',
+      confirmTitle: 'text-red-900',
+      confirmBody: 'text-red-700',
+    },
+  }[variant];
+
   const handleApprove = async () => {
     setIsExecuting(true);
     try {
@@ -73,38 +111,42 @@ export default function ActionPanel({
   };
 
   return (
-    <div className="card border-red-200 bg-red-50">
+    <div className={`card ${styles.card}`}>
       <div className="p-6">
-        <h3 className="text-sm font-semibold text-red-900 uppercase tracking-wide">
+        <h3 className={`text-sm font-semibold uppercase tracking-wide ${styles.heading}`}>
           Recommended Action
         </h3>
-        <p className="mt-2 text-sm text-red-800">{recommendation}</p>
+        <p className={`mt-2 text-sm ${styles.body}`}>{recommendation}</p>
 
         <div className="mt-4">
           {!isConfirming ? (
             <button
               onClick={() => setIsConfirming(true)}
-              className="btn-danger w-full text-center"
+              className={`${styles.button} w-full text-center`}
             >
               {recommendedAction === 'HOLD_PAYMENT' ? 'Hold Payment' : recommendedAction}
             </button>
           ) : (
             <div className="space-y-3">
-              <div className="bg-white border border-red-200 rounded-lg p-3">
-                <p className="text-sm font-medium text-red-900">
+              <div className={`border rounded-lg p-3 ${styles.confirmBox}`}>
+                <p className={`text-sm font-medium ${styles.confirmTitle}`}>
                   Confirm: {recommendedAction === 'HOLD_PAYMENT' ? 'Hold Payment' : recommendedAction}
                 </p>
-                <p className="text-xs text-red-700 mt-1">
-                  This will place the payment on hold and notify the finance team.
+                <p className={`text-xs mt-1 ${styles.confirmBody}`}>
+                  {recommendedAction === 'HOLD_PAYMENT'
+                    ? 'This will place the payment on hold and notify the finance team.'
+                    : recommendedAction === 'APPROVE_PAYMENT'
+                    ? 'This will release the payment for processing.'
+                    : 'This will update the investigation status accordingly.'}
                 </p>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={handleApprove}
                   disabled={isExecuting}
-                  className="btn-danger flex-1 text-center"
+                  className={`${styles.button} flex-1 text-center`}
                 >
-                  {isExecuting ? 'Executing...' : 'Confirm Hold'}
+                  {isExecuting ? 'Executing...' : `Confirm ${recommendedAction === 'HOLD_PAYMENT' ? 'Hold' : recommendedAction === 'APPROVE_PAYMENT' ? 'Approval' : 'Action'}`}
                 </button>
                 <button
                   onClick={() => setIsConfirming(false)}

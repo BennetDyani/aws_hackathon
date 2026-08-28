@@ -5,43 +5,7 @@ const globalInvoices = globalThis as unknown as {
   __trustagent_invoices?: Invoice[];
 };
 
-const DEFAULT_INVOICES: Invoice[] = [
-  {
-    id: 'INV-1048',
-    supplier_id: 'SUP-001',
-    supplier_name: 'ABC Office Solutions',
-    amount: 185000,
-    currency: 'ZAR',
-    date: '2026-08-19',
-    due_date: '2026-08-22',
-    bank_account: '****9917',  // DIFFERENT from historical ****4821
-    bank_name: 'Capitec Bank', // DIFFERENT from historical First National Bank
-    description: 'Bulk office equipment order - urgent delivery',
-    line_items: [
-      {
-        description: 'Ergonomic office chairs (x25)',
-        quantity: 25,
-        unit_price: 4500,
-        total: 112500,
-      },
-      {
-        description: 'Standing desk converters (x15)',
-        quantity: 15,
-        unit_price: 3500,
-        total: 52500,
-      },
-      {
-        description: 'Delivery and installation',
-        quantity: 1,
-        unit_price: 20000,
-        total: 20000,
-      },
-    ],
-    status: 'SUBMITTED',
-    urgency: 'IMMEDIATE',
-    submitted_by: 'procurement@company.co.za',
-  },
-];
+const DEFAULT_INVOICES: Invoice[] = [];
 
 if (!globalInvoices.__trustagent_invoices) {
   globalInvoices.__trustagent_invoices = [...DEFAULT_INVOICES];
