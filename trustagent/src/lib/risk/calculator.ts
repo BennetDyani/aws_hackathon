@@ -12,6 +12,7 @@ const RISK_WEIGHTS: Record<string, number> = {
   NEW_BANK_ACCOUNT: 20,
   PATTERN_ANOMALY: 10,
   OTHER: 5,
+  CONFIRMED_MATCH: 0,
 };
 
 function classifyRiskLevel(score: number): RiskLevel {
@@ -26,7 +27,7 @@ export function calculateRisk(indicators: RiskIndicator[]): RiskResult {
   const scoredIndicators: Array<RiskIndicator & { weight: number }> = [];
 
   for (const indicator of indicators) {
-    const weight = RISK_WEIGHTS[indicator.type] || RISK_WEIGHTS['OTHER'];
+    const weight = indicator.type in RISK_WEIGHTS ? RISK_WEIGHTS[indicator.type] : RISK_WEIGHTS['OTHER'];
     totalScore += weight;
     scoredIndicators.push({ ...indicator, weight });
   }

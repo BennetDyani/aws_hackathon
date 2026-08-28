@@ -4,7 +4,6 @@ import { Investigation, Evidence, ActivityEntry, DashboardMetrics } from '@/lib/
 const globalStore = globalThis as unknown as {
   __trustagent_investigations?: Map<string, Investigation>;
   __trustagent_counter?: number;
-  __trustagent_initialized?: boolean;
 };
 
 if (!globalStore.__trustagent_investigations) {
@@ -103,66 +102,3 @@ export function getDashboardMetrics(): DashboardMetrics {
     ).length,
   };
 }
-
-// Initialize with some demo data for the dashboard
-export function initializeDemoData(): void {
-  if (globalStore.__trustagent_initialized) return; // Already initialized
-  globalStore.__trustagent_initialized = true;
-
-  // Add a pre-completed low-risk investigation for dashboard variety
-  const counter = incrementCounter();
-  const demoInv: Investigation = {
-    id: `INV-${String(counter).padStart(3, '0')}`,
-    case_type: 'SUPPLIER_INVOICE',
-    status: 'CLOSED',
-    risk_score: 15,
-    risk_level: 'LOW',
-    summary: 'Routine invoice from Metro Cleaning Services. All details match historical records.',
-    recommendation: 'Approve payment - no anomalies detected.',
-    recommended_action: 'APPROVE_PAYMENT',
-    invoice_id: 'INV-1047',
-    supplier_id: 'SUP-002',
-    evidence: [
-      {
-        id: 'EVD-D01',
-        investigation_id: `INV-${String(counter).padStart(3, '0')}`,
-        type: 'VERIFICATION',
-        description: 'Bank account matches historical records',
-        detail: 'Account ****7733 matches all previous transactions.',
-        severity: 'LOW',
-        source: 'Transaction History',
-        risk_contribution: 0,
-        timestamp: '2026-08-18T10:15:00Z',
-      },
-    ],
-    activity_log: [
-      {
-        timestamp: '2026-08-18T10:14:00Z',
-        action: 'Investigation started',
-        detail: 'Automated investigation for INV-1047',
-        tool_used: null,
-        status: 'COMPLETED',
-      },
-      {
-        timestamp: '2026-08-18T10:14:02Z',
-        action: 'Invoice analyzed',
-        detail: 'No anomalies detected',
-        tool_used: 'analyze_invoice',
-        status: 'COMPLETED',
-      },
-      {
-        timestamp: '2026-08-18T10:15:00Z',
-        action: 'Investigation completed',
-        detail: 'Low risk - approved for payment',
-        tool_used: null,
-        status: 'COMPLETED',
-      },
-    ],
-    created_at: '2026-08-18T10:14:00Z',
-    updated_at: '2026-08-18T10:15:00Z',
-  };
-  investigations.set(demoInv.id, demoInv);
-}
-
-// Initialize on module load
-initializeDemoData();

@@ -16,8 +16,6 @@ export default function Dashboard() {
     action_required: 0,
     on_hold: 0,
   });
-  const [isCreating, setIsCreating] = useState(false);
-
   useEffect(() => {
     fetchData();
   }, []);
@@ -35,25 +33,6 @@ export default function Dashboard() {
 
   function handleInvestigationCreated(investigationId: string) {
     router.push(`/investigations/${investigationId}`);
-  }
-
-  async function handleNewInvestigation() {
-    setIsCreating(true);
-    try {
-      const res = await fetch('/api/investigations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ invoice_id: 'INV-1048' }),
-      });
-      const data = await res.json();
-      if (data.investigation) {
-        router.push(`/investigations/${data.investigation.id}`);
-      }
-    } catch (error) {
-      console.error('Failed to create investigation:', error);
-    } finally {
-      setIsCreating(false);
-    }
   }
 
   const statusColors: Record<string, string> = {
@@ -76,16 +55,6 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-3">
           <InvoiceUpload onInvestigationCreated={handleInvestigationCreated} />
-          <button
-            onClick={handleNewInvestigation}
-            disabled={isCreating}
-            className="btn-secondary flex items-center gap-2 text-sm"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            {isCreating ? 'Creating...' : 'Quick Demo'}
-          </button>
         </div>
       </div>
 
@@ -133,32 +102,6 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Suspicious Invoice Alert */}
-      <div className="card border-orange-200 bg-orange-50 p-6">
-        <div className="flex items-start gap-4">
-          <div className="p-2 bg-orange-100 rounded-lg">
-            <svg className="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-            </svg>
-          </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold text-orange-900">Suspicious Invoice Pending Review</h3>
-            <p className="text-sm text-orange-700 mt-1">
-              Invoice <span className="font-mono font-medium">INV-1048</span> from ABC Office Solutions
-              for <span className="font-bold">R185,000</span> has been submitted with IMMEDIATE urgency.
-              This invoice requires investigation before payment can be released.
-            </p>
-            <button
-              onClick={handleNewInvestigation}
-              disabled={isCreating}
-              className="mt-3 text-sm font-medium text-orange-800 hover:text-orange-900 underline"
-            >
-              Upload Invoice & Investigate →
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Investigation List */}
       <div className="card">
         <div className="px-4 py-3 border-b border-gray-200">
@@ -166,7 +109,7 @@ export default function Dashboard() {
         </div>
         {investigations.length === 0 ? (
           <div className="p-8 text-center text-gray-400">
-            No investigations yet. Start one by clicking "New Investigation".
+            No investigations yet. Start one by clicking &quot;Upload Invoice&quot;.
           </div>
         ) : (
           <div className="divide-y divide-gray-100">

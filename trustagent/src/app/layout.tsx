@@ -32,6 +32,9 @@ export default function RootLayout({
                   <a href="/" className="text-sm font-medium text-gray-600 hover:text-gray-900">
                     Dashboard
                   </a>
+                  <a href="/suppliers" className="text-sm font-medium text-gray-600 hover:text-gray-900">
+                    Suppliers
+                  </a>
                   <span className="text-sm text-gray-400">|</span>
                   <span className="text-sm text-gray-500">
                     AI Investigation Platform

@@ -1,7 +1,7 @@
 import { INVESTIGATION_SYSTEM_PROMPT, buildInvestigationUserPrompt } from './prompts';
 import { handleToolCall, ToolResult } from './tool-handlers';
-import { addActivity, updateInvestigation } from '@/lib/data/store';
-import { ActivityEntry } from '@/lib/types';
+import { addActivity, getInvestigation, updateInvestigation } from '@/lib/data/store';
+import { Action, ActivityEntry, RiskLevel } from '@/lib/types';
 import { completeLLM, LLMMessage } from './llm';
 
 const MAX_ITERATIONS = 12;
@@ -32,6 +32,68 @@ function emitActivity(
   callback({ type: 'activity', data: entry });
 }
 
+// Deterministic fallback used only when the model never calls
+// create_investigation_report itself (observed intermittently — the model
+// sometimes stops after calculate_risk with a plain text summary instead of
+// finalizing). Ensures every investigation reaches an actionable outcome
+// instead of getting stuck at IN_PROGRESS with no recommendation.
+function buildFallbackRecommendation(riskLevel: RiskLevel | null): { action: Action; text: string } {
+  switch (riskLevel) {
+    case 'CRITICAL':
+    case 'HIGH':
+      return {
+        action: 'HOLD_PAYMENT',
+        text: `Risk level is ${riskLevel}. Recommend holding payment pending independent verification.`,
+      };
+    case 'MEDIUM':
+      return {
+        action: 'REQUEST_VERIFICATION',
+        text: 'Risk level is MEDIUM. Recommend requesting additional verification before processing.',
+      };
+    case 'LOW':
+      return {
+        action: 'APPROVE_PAYMENT',
+        text: 'Risk level is LOW. No significant issues found; recommend normal processing.',
+      };
+    default:
+      return {
+        action: 'ESCALATE',
+        text: 'Investigation could not reach a risk determination automatically. Recommend escalation for manual review.',
+      };
+  }
+}
+
+function finalizeWithFallbackReport(investigationId: string, callback: EventCallback): void {
+  const investigation = getInvestigation(investigationId);
+  if (!investigation) return;
+
+  const { action, text } = buildFallbackRecommendation(investigation.risk_level);
+  const summary =
+    investigation.evidence.length > 0
+      ? `Automated summary: ${investigation.evidence.length} evidence item(s) identified. ${text}`
+      : `No risk indicators were identified during this investigation. ${text}`;
+
+  updateInvestigation(investigationId, {
+    summary,
+    recommendation: text,
+    recommended_action: action,
+    status: 'ACTION_REQUIRED',
+  });
+
+  emitActivity(
+    investigationId,
+    'Investigation report generated (auto-finalized)',
+    'The AI agent did not explicitly finalize a report; findings were auto-compiled from gathered evidence.',
+    null,
+    callback
+  );
+
+  callback({
+    type: 'recommendation',
+    data: { recommendation: text, recommended_action: action },
+  });
+}
+
 export async function runInvestigation(
   investigationId: string,
   invoiceId: string,
@@ -52,6 +114,8 @@ export async function runInvestigation(
 
   try {
     let iteration = 0;
+    let reportGenerated = false;
+    let nudgedForReport = false;
 
     while (iteration < MAX_ITERATIONS) {
       iteration++;
@@ -69,6 +133,20 @@ export async function runInvestigation(
             onEvent
           );
         }
+
+        // The model gave a final text answer without ever calling
+        // create_investigation_report. Give it exactly one nudge to finish
+        // properly before falling back to a deterministic report below.
+        if (!reportGenerated && !nudgedForReport) {
+          nudgedForReport = true;
+          messages.push({
+            role: 'user',
+            content:
+              'You have not yet called create_investigation_report. Based on all the evidence and risk score already gathered, call create_investigation_report now to finalize your findings.',
+          });
+          continue;
+        }
+
         break;
       }
 
@@ -113,6 +191,7 @@ export async function runInvestigation(
 
         // If it was create_investigation_report, emit recommendation
         if (toolName === 'create_investigation_report' && result.success) {
+          reportGenerated = true;
           onEvent({
             type: 'recommendation',
             data: {
@@ -133,6 +212,10 @@ export async function runInvestigation(
 
       // Add tool results to conversation
       messages.push(...toolResults);
+    }
+
+    if (!reportGenerated) {
+      finalizeWithFallbackReport(investigationId, onEvent);
     }
 
     // Emit completion
