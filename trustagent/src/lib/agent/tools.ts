@@ -24,7 +24,7 @@ export const TOOL_DEFINITIONS = [
     toolSpec: {
       name: 'lookup_supplier',
       description:
-        'Look up supplier details including registration, verification status, and current banking information on file.',
+        'Look up supplier details including registration, verification status, current banking information on file, and (when set) the expected spending range for this supplier.',
       inputSchema: {
         json: {
           type: 'object',
@@ -96,7 +96,7 @@ export const TOOL_DEFINITIONS = [
                   type: {
                     type: 'string',
                     description:
-                      'Indicator type: BANK_ACCOUNT_MISMATCH, UNUSUAL_AMOUNT, URGENCY_INDICATOR, POLICY_VIOLATION, BANK_DETAILS_CHANGED, AMOUNT_EXCEEDS_THRESHOLD, PATTERN_ANOMALY, OTHER',
+                      'Indicator type: BANK_ACCOUNT_MISMATCH, UNUSUAL_AMOUNT, URGENCY_INDICATOR, POLICY_VIOLATION, SUPPLIER_NOT_VERIFIED, BANK_DETAILS_CHANGED, AMOUNT_EXCEEDS_THRESHOLD, NEW_BANK_ACCOUNT, PATTERN_ANOMALY, CONFIRMED_MATCH (zero-weight — use for a checked dimension that came back clean, so the evidence log explains why, not just what is wrong), OTHER',
                   },
                   description: {
                     type: 'string',

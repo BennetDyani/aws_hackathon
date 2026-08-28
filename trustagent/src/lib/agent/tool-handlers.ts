@@ -60,12 +60,34 @@ function handleAnalyzeInvoice(input: ToolInput): ToolResult {
     };
   }
 
+  const supplier = getSupplierById(invoice.supplier_id);
+
   const redFlags = [];
   if (invoice.urgency === 'IMMEDIATE') {
     redFlags.push('Payment urgency marked as IMMEDIATE — common social engineering tactic');
   }
-  if (invoice.amount > 100000) {
-    redFlags.push(`Amount R${invoice.amount.toLocaleString()} exceeds R100,000 large transaction threshold`);
+
+  // Prefer a supplier-specific expected spending range over the flat
+  // company-wide threshold — a large invoice that's normal for THIS
+  // supplier isn't itself a fraud signal.
+  if (supplier?.verified && supplier.expected_spend_min != null && supplier.expected_spend_max != null) {
+    if (invoice.amount > supplier.expected_spend_max) {
+      redFlags.push(
+        `Amount R${invoice.amount.toLocaleString()} exceeds this supplier's expected spending range (R${supplier.expected_spend_min.toLocaleString()}–R${supplier.expected_spend_max.toLocaleString()})`
+      );
+    }
+  } else if (invoice.amount > 100000) {
+    redFlags.push(
+      `Amount R${invoice.amount.toLocaleString()} exceeds R100,000 large transaction threshold (no supplier-specific spending range on file)`
+    );
+  }
+
+  if (!supplier) {
+    redFlags.push('No supplier record found for this invoice');
+  } else if (!supplier.verified) {
+    redFlags.push(
+      'Supplier is not yet verified — no confirmed banking history on file; treat as new-supplier onboarding, not a bank-account change'
+    );
   }
 
   return {
@@ -85,6 +107,10 @@ function handleAnalyzeInvoice(input: ToolInput): ToolResult {
       line_items: invoice.line_items,
       red_flags: redFlags,
       status: invoice.status,
+      supplier_verified: supplier?.verified ?? false,
+      expected_spend_range: supplier
+        ? { min: supplier.expected_spend_min, max: supplier.expected_spend_max }
+        : null,
     },
     activityDescription: 'Invoice analyzed',
   };
@@ -112,6 +138,8 @@ function handleLookupSupplier(input: ToolInput): ToolResult {
       risk_status: supplier.risk_status,
       verified: supplier.verified,
       verified_date: supplier.verified_date,
+      expected_spend_min: supplier.expected_spend_min,
+      expected_spend_max: supplier.expected_spend_max,
     },
     activityDescription: 'Supplier identified',
   };
@@ -190,6 +218,7 @@ function handleCalculateRisk(input: ToolInput, investigationId: string): ToolRes
       type: indicator.type.includes('MISMATCH') ? 'MISMATCH' :
             indicator.type.includes('POLICY') ? 'POLICY_VIOLATION' :
             indicator.type.includes('PATTERN') || indicator.type.includes('UNUSUAL') ? 'PATTERN' :
+            indicator.type.includes('NOT_VERIFIED') || indicator.type === 'CONFIRMED_MATCH' ? 'VERIFICATION' :
             'ANOMALY',
       description: indicator.description,
       detail: indicator.description,
