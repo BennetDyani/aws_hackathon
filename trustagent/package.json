@@ -12,6 +12,7 @@
     "next": "^14.2.35",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "unpdf": "^1.7.0",
     "uuid": "^14.0.2"
   },
   "devDependencies": {

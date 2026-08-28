@@ -4,7 +4,9 @@ import { useState, useRef } from 'react';
 
 interface UploadedInvoice {
   id: string;
+  supplier_id: string;
   supplier_name: string;
+  supplier_match_status: 'MATCHED_EXISTING' | 'NEW_SUPPLIER';
   amount: number;
   currency: string;
   urgency: string;
@@ -24,6 +26,7 @@ export default function InvoiceUpload({ onInvestigationCreated }: InvoiceUploadP
   const [isUploading, setIsUploading] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [uploadedInvoice, setUploadedInvoice] = useState<UploadedInvoice | null>(null);
+  const [parseWarnings, setParseWarnings] = useState<string[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -35,6 +38,7 @@ export default function InvoiceUpload({ onInvestigationCreated }: InvoiceUploadP
     if (dropped) {
       setFile(dropped);
       setUploadedInvoice(null);
+      setParseWarnings([]);
       setError(null);
     }
   };
@@ -44,6 +48,7 @@ export default function InvoiceUpload({ onInvestigationCreated }: InvoiceUploadP
     if (selected) {
       setFile(selected);
       setUploadedInvoice(null);
+      setParseWarnings([]);
       setError(null);
     }
   };
@@ -65,6 +70,7 @@ export default function InvoiceUpload({ onInvestigationCreated }: InvoiceUploadP
       const data = await res.json();
       if (data.success) {
         setUploadedInvoice(data.invoice);
+        setParseWarnings(data.parse_warnings || []);
       } else {
         setError(data.error || 'Failed to parse invoice');
       }
@@ -105,6 +111,7 @@ export default function InvoiceUpload({ onInvestigationCreated }: InvoiceUploadP
     setIsOpen(false);
     setFile(null);
     setUploadedInvoice(null);
+    setParseWarnings([]);
     setError(null);
   };
 
@@ -145,7 +152,7 @@ export default function InvoiceUpload({ onInvestigationCreated }: InvoiceUploadP
         {!uploadedInvoice && (
           <>
             <p className="text-sm text-gray-500 mb-4">
-              Upload a supplier invoice document to analyze. Supported formats: PDF, Markdown, JSON, CSV, DOCX.
+              Upload a supplier invoice document to analyze. Supported formats: PDF, Markdown, JSON, CSV, TXT.
             </p>
 
             <div
@@ -189,13 +196,13 @@ export default function InvoiceUpload({ onInvestigationCreated }: InvoiceUploadP
                   <p className="text-sm text-gray-600">
                     <span className="font-medium text-brand-600">Click to upload</span> or drag and drop
                   </p>
-                  <p className="text-xs text-gray-400">MD, PDF, JSON, CSV, DOCX up to 10MB</p>
+                  <p className="text-xs text-gray-400">PDF, MD, JSON, CSV, TXT up to 10MB</p>
                 </div>
               )}
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf,.json,.csv,.docx,.doc,.xlsx,.xls,.md,.txt"
+                accept=".pdf,.json,.csv,.md,.txt"
                 onChange={handleFileSelect}
                 className="hidden"
               />
@@ -229,6 +236,26 @@ export default function InvoiceUpload({ onInvestigationCreated }: InvoiceUploadP
         {/* Step 2: Show parsed invoice + start investigation */}
         {uploadedInvoice && (
           <>
+            {parseWarnings.length > 0 && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+                <p className="font-medium mb-1">Review before investigating:</p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  {parseWarnings.map((warning, i) => (
+                    <li key={i}>{warning}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {uploadedInvoice.supplier_match_status === 'NEW_SUPPLIER' && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                This supplier wasn&apos;t recognized. A new unverified record ({uploadedInvoice.supplier_id}) was
+                created.{' '}
+                <a href="/suppliers" className="underline font-medium">
+                  Verify it in Suppliers
+                </a>{' '}
+                to set trusted bank details and an expected spending range.
+              </div>
+            )}
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
               <h3 className="text-sm font-semibold text-gray-700 mb-3">Parsed Invoice Details</h3>
               <div className="grid grid-cols-2 gap-3 text-sm">

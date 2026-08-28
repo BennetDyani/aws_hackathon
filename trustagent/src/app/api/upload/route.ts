@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getDocumentProxy, extractText } from 'unpdf';
 import { Invoice } from '@/lib/types';
 import { addInvoice } from '@/lib/data/invoices';
+import { addSupplier, findSupplierMatch } from '@/lib/data/suppliers';
+import { extractInvoiceFields, ExtractedInvoiceFields } from '@/lib/agent/llm';
 
-// Parse markdown invoice content to extract key fields
+// Fallback-only parser for markdown/text invoices, used when the LLM
+// extraction call fails (e.g. API outage or rate limit) so an upload still
+// produces a best-effort result instead of erroring out entirely. Tuned to
+// the specific markdown template used by this project's sample invoices —
+// it will not generalize to arbitrary layouts, which is exactly why the
+// LLM-based extraction below is the primary path.
 function parseMarkdownInvoice(content: string, filename: string): Partial<Invoice> {
   const invoice: Partial<Invoice> = {
     currency: 'ZAR',
@@ -10,12 +18,10 @@ function parseMarkdownInvoice(content: string, filename: string): Partial<Invoic
     line_items: [],
   };
 
-  // Extract invoice number
   const invMatch = content.match(/\*\*Invoice Number:\*\*\s*(INV-\d+)/i)
     || content.match(/Invoice\s*(?:Number|No|#)[:\s]*(INV-\d+)/i);
   if (invMatch) invoice.id = invMatch[1];
 
-  // Extract date
   const dateMatch = content.match(/\*\*Date:\*\*\s*(\d{1,2}\s+\w+\s+\d{4})/i)
     || content.match(/Date[:\s]*(\d{4}-\d{2}-\d{2})/i);
   if (dateMatch) {
@@ -23,7 +29,6 @@ function parseMarkdownInvoice(content: string, filename: string): Partial<Invoic
     invoice.date = d.toISOString().split('T')[0];
   }
 
-  // Extract due date
   const dueMatch = content.match(/\*\*Due Date:\*\*\s*(\d{1,2}\s+\w+\s+\d{4})/i)
     || content.match(/Due\s*Date[:\s]*(\d{4}-\d{2}-\d{2})/i);
   if (dueMatch) {
@@ -31,7 +36,6 @@ function parseMarkdownInvoice(content: string, filename: string): Partial<Invoic
     invoice.due_date = d.toISOString().split('T')[0];
   }
 
-  // Extract priority/urgency
   const priorityMatch = content.match(/\*\*Priority:\*\*\s*(\w+)/i);
   if (priorityMatch) {
     const p = priorityMatch[1].toUpperCase();
@@ -40,21 +44,17 @@ function parseMarkdownInvoice(content: string, filename: string): Partial<Invoic
     else invoice.urgency = 'NORMAL';
   }
 
-  // Extract supplier name from "From" section
   const supplierMatch = content.match(/\*\*(.+?)\*\*\s*\nRegistration/m)
     || content.match(/From \(Supplier\)\s*\n\n\*\*(.+?)\*\*/m);
   if (supplierMatch) invoice.supplier_name = supplierMatch[1];
 
-  // Extract bank account (last 4 digits pattern)
   const bankAcctMatch = content.match(/Account Number[|\s:]*[^\*]*\*\*(\d{4})\*\*/i)
     || content.match(/\*\*(\d{4})\*\*/);
   if (bankAcctMatch) invoice.bank_account = `****${bankAcctMatch[1]}`;
 
-  // Extract bank name
   const bankNameMatch = content.match(/\|\s*Bank\s*\|\s*(.+?)\s*\|/i);
   if (bankNameMatch) invoice.bank_name = bankNameMatch[1].trim();
 
-  // Extract total amount
   const totalMatch = content.match(/\*\*Total Due\*\*\s*\|\s*\*\*R\s*([\d,]+(?:\.\d{2})?)\*\*/i)
     || content.match(/Total Due[^R]*R\s*([\d,]+(?:\.\d{2})?)/i)
     || content.match(/\*\*R\s*([\d,]+(?:\.\d{2})?)\*\*/);
@@ -62,7 +62,6 @@ function parseMarkdownInvoice(content: string, filename: string): Partial<Invoic
     invoice.amount = parseFloat(totalMatch[1].replace(/,/g, ''));
   }
 
-  // Extract line items from markdown table
   const lineItemRegex = /\|\s*\d+\s*\|\s*(.+?)\s*\|\s*[\d,]+\s*\|\s*R\s*([\d,]+(?:\.\d{2})?)\s*\|\s*R\s*([\d,]+(?:\.\d{2})?)\s*\|/g;
   let match;
   while ((match = lineItemRegex.exec(content)) !== null) {
@@ -77,11 +76,9 @@ function parseMarkdownInvoice(content: string, filename: string): Partial<Invoic
     }
   }
 
-  // Extract notes
   const notesMatch = content.match(/## Notes\s*\n\n([\s\S]*?)(?:\n---|\n\*|$)/);
   if (notesMatch) invoice.description = notesMatch[1].trim().substring(0, 200);
 
-  // Fallback ID from filename
   if (!invoice.id) {
     const fnMatch = filename.match(/(INV-\d+)/i);
     if (fnMatch) invoice.id = fnMatch[1];
@@ -91,7 +88,7 @@ function parseMarkdownInvoice(content: string, filename: string): Partial<Invoic
   return invoice;
 }
 
-// Parse JSON invoice
+// Parse JSON invoice — structured data, no LLM needed.
 function parseJsonInvoice(content: string): Partial<Invoice> {
   try {
     const data = JSON.parse(content);
@@ -119,6 +116,23 @@ function parseJsonInvoice(content: string): Partial<Invoice> {
   }
 }
 
+function extractedFieldsToInvoice(extracted: ExtractedInvoiceFields, filename: string): Partial<Invoice> {
+  return {
+    id: extracted.invoice_number || undefined,
+    supplier_name: extracted.supplier_name || undefined,
+    amount: extracted.amount ?? undefined,
+    currency: extracted.currency || 'ZAR',
+    date: extracted.invoice_date || undefined,
+    due_date: extracted.due_date || undefined,
+    bank_account: extracted.bank_account_last4 ? `****${extracted.bank_account_last4}` : undefined,
+    bank_name: extracted.bank_name || undefined,
+    description: extracted.description || filename,
+    line_items: extracted.line_items,
+    status: 'SUBMITTED',
+    urgency: extracted.urgency,
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -128,22 +142,58 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    const content = await file.text();
     const filename = file.name.toLowerCase();
-
     let parsedInvoice: Partial<Invoice>;
+    const parseWarnings: string[] = [];
 
     if (filename.endsWith('.json')) {
+      const content = await file.text();
       parsedInvoice = parseJsonInvoice(content);
+    } else if (filename.endsWith('.pdf')) {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const pdfDoc = await getDocumentProxy(new Uint8Array(buffer));
+      const { text } = await extractText(pdfDoc, { mergePages: true });
+
+      try {
+        const extracted = await extractInvoiceFields(text);
+        parsedInvoice = extractedFieldsToInvoice(extracted, file.name);
+        parseWarnings.push(...extracted.warnings);
+      } catch (err) {
+        console.error('PDF invoice extraction failed:', err);
+        return NextResponse.json(
+          { error: 'Could not extract invoice data from this PDF. Please try again or use a different format.' },
+          { status: 422 }
+        );
+      }
     } else {
-      // Treat as markdown/text
-      parsedInvoice = parseMarkdownInvoice(content, file.name);
+      // markdown / plain text / CSV
+      const content = await file.text();
+      try {
+        const extracted = await extractInvoiceFields(content);
+        parsedInvoice = extractedFieldsToInvoice(extracted, file.name);
+        parseWarnings.push(...extracted.warnings);
+      } catch (err) {
+        console.error('LLM extraction failed, falling back to pattern-based parser:', err);
+        parsedInvoice = parseMarkdownInvoice(content, file.name);
+        parseWarnings.push('AI extraction was unavailable — used basic pattern matching as a fallback. Please verify all fields carefully.');
+      }
+    }
+
+    // Flag when critical fields couldn't be found at all, before defaults
+    // paper over them below — otherwise a failed extraction silently looks
+    // like a legitimate R0 invoice from "Unknown Supplier".
+    const criticalMissing: string[] = [];
+    if (!parsedInvoice.supplier_name) criticalMissing.push('supplier name');
+    if (!parsedInvoice.amount) criticalMissing.push('invoice amount');
+    if (!parsedInvoice.bank_account) criticalMissing.push('bank account number');
+    if (criticalMissing.length > 0) {
+      parseWarnings.push(`Could not confidently extract: ${criticalMissing.join(', ')}. Please verify manually before investigating.`);
     }
 
     // Build the full invoice with defaults
     const invoice: Invoice = {
       id: parsedInvoice.id || `INV-${Date.now().toString().slice(-4)}`,
-      supplier_id: 'SUP-001', // Default to known supplier for demo
+      supplier_id: '', // resolved below via supplier matching
       supplier_name: parsedInvoice.supplier_name || 'Unknown Supplier',
       amount: parsedInvoice.amount || 0,
       currency: parsedInvoice.currency || 'ZAR',
@@ -158,13 +208,33 @@ export async function POST(request: NextRequest) {
       submitted_by: 'upload@trustcorp.co.za',
     };
 
-    // Try to match supplier by name
-    if (invoice.supplier_name.toLowerCase().includes('abc office')) {
-      invoice.supplier_id = 'SUP-001';
-    } else if (invoice.supplier_name.toLowerCase().includes('metro')) {
-      invoice.supplier_id = 'SUP-002';
-    } else if (invoice.supplier_name.toLowerCase().includes('digital print')) {
-      invoice.supplier_id = 'SUP-003';
+    // Match against known suppliers by name. If nothing resembles it closely
+    // enough, this is a genuinely new supplier — auto-register it as
+    // UNVERIFIED using the bank details straight off this invoice, rather
+    // than misattributing it to an unrelated existing supplier (which would
+    // always trip a false bank-account-mismatch flag).
+    const match = findSupplierMatch(invoice.supplier_name);
+    if (match.supplier) {
+      invoice.supplier_id = match.supplier.id;
+      invoice.supplier_match_status = 'MATCHED_EXISTING';
+      invoice.supplier_match_confidence = match.confidence;
+    } else {
+      const newSupplier = addSupplier({
+        name: invoice.supplier_name,
+        contact_email: 'unverified@unknown.co.za',
+        bank_account: invoice.bank_account,
+        bank_name: invoice.bank_name,
+        registration_number: 'UNKNOWN',
+        risk_status: 'MEDIUM',
+        verified: false,
+        verified_date: null,
+        verified_by: null,
+        expected_spend_min: null,
+        expected_spend_max: null,
+      });
+      invoice.supplier_id = newSupplier.id;
+      invoice.supplier_match_status = 'NEW_SUPPLIER';
+      invoice.supplier_match_confidence = 0;
     }
 
     // Add to the in-memory store
@@ -174,7 +244,9 @@ export async function POST(request: NextRequest) {
       success: true,
       invoice: {
         id: invoice.id,
+        supplier_id: invoice.supplier_id,
         supplier_name: invoice.supplier_name,
+        supplier_match_status: invoice.supplier_match_status,
         amount: invoice.amount,
         currency: invoice.currency,
         urgency: invoice.urgency,
@@ -183,6 +255,7 @@ export async function POST(request: NextRequest) {
         date: invoice.date,
         due_date: invoice.due_date,
       },
+      parse_warnings: parseWarnings,
     });
   } catch (error) {
     console.error('Upload error:', error);

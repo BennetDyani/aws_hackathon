@@ -61,6 +61,10 @@ export interface Supplier {
   risk_status: 'LOW' | 'MEDIUM' | 'HIGH';
   verified: boolean;
   verified_date: string | null;
+  verified_by: string | null;
+  expected_spend_min: number | null;
+  expected_spend_max: number | null;
+  created_at: string;
 }
 
 export interface Transaction {
@@ -97,6 +101,8 @@ export interface Invoice {
   status: InvoiceStatus;
   urgency: Urgency;
   submitted_by: string;
+  supplier_match_status?: 'MATCHED_EXISTING' | 'NEW_SUPPLIER';
+  supplier_match_confidence?: number;
 }
 
 export interface Evidence {
